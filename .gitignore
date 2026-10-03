@@ -1,0 +1,15 @@
+.env
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# RescueGroups raw API responses
+data/rescuegroups/raw/
+data/rescuegroups/processed/
+
+# RescueGroups sample- and row-level outputs
+results/rescuegroups/*_sample_*.csv
+results/rescuegroups/*_sample_*.json
+results/rescuegroups/*_sample_*.md
+results/rescuegroups/distributions.csv

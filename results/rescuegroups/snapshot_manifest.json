@@ -1,0 +1,42 @@
+{
+  "analysis_pair": {
+    "selection_mode": "explicit",
+    "dogs_snapshot": "data\\rescuegroups\\raw\\dogs_available_all_20261003T123358Z.json",
+    "cats_snapshot": "data\\rescuegroups\\raw\\cats_available_all_20261003T124105Z.json",
+    "explicit_pair_required_for_reproducibility": true
+  },
+  "snapshots": [
+    {
+      "snapshot_file": "data\\rescuegroups\\raw\\dogs_available_all_20261003T123358Z.json",
+      "parquet_file": "data\\rescuegroups\\processed\\dogs_available_all_20261003T123358Z.parquet",
+      "collection_time": "2026-10-03T12:40:26.606402+00:00",
+      "species": "dogs",
+      "reported_count": 31622,
+      "raw_count": 31623,
+      "unique_count": 31622,
+      "duplicates": 1,
+      "retries": 0,
+      "elapsed_seconds": 388.089,
+      "api_base_url": "https://api.rescuegroups.org/v5",
+      "source_endpoint": "https://api.rescuegroups.org/v5/public/animals/search/available/dogs/",
+      "raw_file_bytes": 286285796,
+      "parquet_file_bytes": 24451980
+    },
+    {
+      "snapshot_file": "data\\rescuegroups\\raw\\cats_available_all_20261003T124105Z.json",
+      "parquet_file": "data\\rescuegroups\\processed\\cats_available_all_20261003T124105Z.parquet",
+      "collection_time": "2026-10-03T12:47:41.125210+00:00",
+      "species": "cats",
+      "reported_count": 30967,
+      "raw_count": 30968,
+      "unique_count": 30968,
+      "duplicates": 0,
+      "retries": 0,
+      "elapsed_seconds": 396.009,
+      "api_base_url": "https://api.rescuegroups.org/v5",
+      "source_endpoint": "https://api.rescuegroups.org/v5/public/animals/search/available/cats/",
+      "raw_file_bytes": 247500695,
+      "parquet_file_bytes": 18541521
+    }
+  ]
+}
