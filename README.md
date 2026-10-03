@@ -49,6 +49,9 @@ Copy-Item .env.example .env
 RescueGroups 데이터는 저장소에서 원본을 공유하지 않고,
 각 팀원이 자신의 API Key로 동일한 수집·전처리 코드를 실행하여 생성합니다.
 
+> 아래 환경 설정과 재현 명령은 PR #7의 `requirements.txt`, `.env.example`,
+> `.gitignore`, `src/rescuegroups/`가 병합된 뒤 사용할 수 있습니다.
+
 ```powershell
 .\.venv\Scripts\python.exe .\src\rescuegroups\collect.py --species dogs --all
 .\.venv\Scripts\python.exe .\src\rescuegroups\collect.py --species cats --all
