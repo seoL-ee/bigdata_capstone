@@ -34,7 +34,7 @@ data/pawinhand/raw/three_months/
 
 ## 데이터 읽기
 
-재수집 없이 제공 데이터를 읽으려면 이 폴더에서 실행합니다.
+재수집 없이 제공 데이터를 읽으려면 저장소 루트에서 실행합니다.
 
 ```python
 import json
