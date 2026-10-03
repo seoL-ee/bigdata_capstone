@@ -174,7 +174,7 @@ def read_and_convert(path, expected_species):
     columns, attribute_names = build_columns(animals, species, path.name)
     table = pa.table(columns)
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
-    parquet_path = PROCESSED_DIR / path.with_suffix(".parquet").name
+    parquet_path = PROCESSED_DIR / f"{species}__{path.stem}.parquet"
     pq.write_table(table, parquet_path, compression="zstd", use_dictionary=True)
 
     endpoint = f"{BASE_URL}/public/animals/search/available/{species}/"
