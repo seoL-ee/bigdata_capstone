@@ -1,4 +1,10 @@
 {
+  "analysis_pair": {
+    "selection_mode": "explicit",
+    "dogs_snapshot": "data\\rescuegroups\\raw\\dogs_available_all_20261003T123358Z.json",
+    "cats_snapshot": "data\\rescuegroups\\raw\\cats_available_all_20261003T124105Z.json",
+    "explicit_pair_required_for_reproducibility": true
+  },
   "snapshots": [
     {
       "snapshot_file": "data\\rescuegroups\\raw\\dogs_available_all_20261003T123358Z.json",

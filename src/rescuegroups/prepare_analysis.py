@@ -151,6 +151,13 @@ def resolve_snapshot(path_value, expected_species):
     return path
 
 
+def manifest_path(path):
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
 def read_and_convert(path, expected_species):
     payload = json.loads(path.read_text(encoding="utf-8"))
     metadata = payload.get("metadata") or {}
@@ -172,7 +179,7 @@ def read_and_convert(path, expected_species):
 
     endpoint = f"{BASE_URL}/public/animals/search/available/{species}/"
     manifest = {
-        "snapshot_file": str(path.relative_to(ROOT)),
+        "snapshot_file": manifest_path(path),
         "parquet_file": str(parquet_path.relative_to(ROOT)),
         "collection_time": metadata.get("collection_time"),
         "species": species,
@@ -318,8 +325,8 @@ def main(argv=None):
             {
                 "analysis_pair": {
                     "selection_mode": selection_mode,
-                    "dogs_snapshot": str(snapshots["dogs"].relative_to(ROOT)),
-                    "cats_snapshot": str(snapshots["cats"].relative_to(ROOT)),
+                    "dogs_snapshot": manifest_path(snapshots["dogs"]),
+                    "cats_snapshot": manifest_path(snapshots["cats"]),
                     "explicit_pair_required_for_reproducibility": True,
                 },
                 "snapshots": manifests,
