@@ -1,8 +1,10 @@
 """Build Parquet snapshots and full-data profiles from RescueGroups raw JSON."""
 
+import argparse
 import csv
 import json
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
 
 import pyarrow as pa
@@ -115,11 +117,49 @@ def profile_attributes(animals, attribute_names):
     return profile
 
 
-def read_and_convert(path):
+def empty_statistics(total):
+    return {
+        "non_null_n": 0,
+        "null_n": total,
+        "cardinality": 0,
+        "dominant_share_pct": None,
+        "distribution": None,
+    }
+
+
+def snapshot_collection_time(path):
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    timestamp = (payload.get("metadata") or {}).get("collection_time")
+    if not timestamp:
+        raise ValueError(f"snapshot has no collection_time metadata: {path}")
+    return datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+
+
+def select_latest_snapshot(species):
+    candidates = list(RAW_DIR.glob(f"{species}_available_all_*.json"))
+    if not candidates:
+        raise ValueError(f"no full {species} snapshot found in {RAW_DIR}")
+    return max(candidates, key=snapshot_collection_time)
+
+
+def resolve_snapshot(path_value, expected_species):
+    path = Path(path_value)
+    if not path.is_absolute():
+        path = ROOT / path
+    if not path.is_file():
+        raise ValueError(f"{expected_species} snapshot does not exist: {path}")
+    return path
+
+
+def read_and_convert(path, expected_species):
     payload = json.loads(path.read_text(encoding="utf-8"))
     metadata = payload.get("metadata") or {}
     animals = payload.get("data") or []
     species = metadata.get("species") or path.name.split("_")[0]
+    if species != expected_species:
+        raise ValueError(
+            f"{expected_species} snapshot metadata has species={species!r}: {path}"
+        )
     ids = [str(animal.get("id")) for animal in animals]
     raw_count = metadata.get("raw_count") or len(animals) + metadata.get("duplicate_count", 0)
     unique_count = len(set(ids))
@@ -157,32 +197,44 @@ def write_csv(path, fieldnames, rows):
         writer.writerows(rows)
 
 
-def main():
-    snapshots = {
-        species: max(RAW_DIR.glob(f"{species}_available_all_*.json"), key=lambda p: p.stat().st_mtime)
-        for species in ("dogs", "cats")
-    }
+def main(argv=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dogs-snapshot")
+    parser.add_argument("--cats-snapshot")
+    args = parser.parse_args(argv)
+    if bool(args.dogs_snapshot) != bool(args.cats_snapshot):
+        parser.error("--dogs-snapshot and --cats-snapshot must be provided together")
+
+    if args.dogs_snapshot:
+        snapshots = {
+            "dogs": resolve_snapshot(args.dogs_snapshot, "dogs"),
+            "cats": resolve_snapshot(args.cats_snapshot, "cats"),
+        }
+        selection_mode = "explicit"
+    else:
+        snapshots = {species: select_latest_snapshot(species) for species in ("dogs", "cats")}
+        selection_mode = "automatic_latest_collection_time"
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
     manifests = []
     profiles = {}
     totals = {}
     for species, path in snapshots.items():
-        manifest, profile, total = read_and_convert(path)
+        manifest, profile, total = read_and_convert(path, species)
         manifests.append(manifest)
         profiles[species] = profile
         totals[species] = total
         print(f"species={species} parquet_rows={total} file={manifest['parquet_file']}")
 
-    common_fields = sorted(set(profiles["dogs"]) & set(profiles["cats"]))
+    all_fields = sorted(set(profiles["dogs"]) | set(profiles["cats"]))
     coverage_rows = []
     distribution_rows = []
     comparison_rows = []
-    for field in common_fields:
+    for field in all_fields:
         comparison = {"feature": field}
         for species in ("dogs", "cats"):
-            item = profiles[species][field]
             total = totals[species]
+            item = profiles[species].get(field, empty_statistics(total))
             coverage_pct = round(100 * item["non_null_n"] / total, 2)
             null_rate_pct = round(100 * item["null_n"] / total, 2)
             coverage_rows.append(
@@ -262,7 +314,19 @@ def main():
         )
 
     (RESULTS_DIR / "snapshot_manifest.json").write_text(
-        json.dumps({"snapshots": manifests}, ensure_ascii=False, indent=2),
+        json.dumps(
+            {
+                "analysis_pair": {
+                    "selection_mode": selection_mode,
+                    "dogs_snapshot": str(snapshots["dogs"].relative_to(ROOT)),
+                    "cats_snapshot": str(snapshots["cats"].relative_to(ROOT)),
+                    "explicit_pair_required_for_reproducibility": True,
+                },
+                "snapshots": manifests,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
     write_csv(
@@ -285,7 +349,7 @@ def main():
         ["feature", "dogs_coverage_pct", "dogs_cardinality", "dogs_dominant_share_pct", "cats_coverage_pct", "cats_cardinality", "cats_dominant_share_pct", "coverage_gap_pct_points", "minimum_species_coverage_pct", "recommendation"],
         candidate_rows,
     )
-    print(f"common_fields={len(common_fields)} manifest={RESULTS_DIR / 'snapshot_manifest.json'}")
+    print(f"profile_fields={len(all_fields)} manifest={RESULTS_DIR / 'snapshot_manifest.json'}")
 
 
 if __name__ == "__main__":
