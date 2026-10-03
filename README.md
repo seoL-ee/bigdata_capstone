@@ -50,9 +50,11 @@ RescueGroups 데이터는 저장소에서 원본을 공유하지 않고,
 각 팀원이 자신의 API Key로 동일한 수집·전처리 코드를 실행하여 생성합니다.
 
 ```powershell
-.\.venv\Scripts\python.exe .\src\rescuegroups\collect.py --species dogs
-.\.venv\Scripts\python.exe .\src\rescuegroups\collect.py --species cats
-.\.venv\Scripts\python.exe .\src\rescuegroups\prepare_analysis.py
+.\.venv\Scripts\python.exe .\src\rescuegroups\collect.py --species dogs --all
+.\.venv\Scripts\python.exe .\src\rescuegroups\collect.py --species cats --all
+.\.venv\Scripts\python.exe .\src\rescuegroups\prepare_analysis.py `
+  --dogs-snapshot data\rescuegroups\raw\dogs_available_all_<timestamp>.json `
+  --cats-snapshot data\rescuegroups\raw\cats_available_all_<timestamp>.json
 ```
 
 API가 live dataset이므로 발표·실험에 사용한 기준 데이터는 snapshot metadata로 별도 기록합니다.
