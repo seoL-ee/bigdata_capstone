@@ -51,6 +51,7 @@ RescueGroups 데이터는 저장소에서 원본을 공유하지 않고,
 
 > 아래 환경 설정과 재현 명령은 PR #7의 `requirements.txt`, `.env.example`,
 > `.gitignore`, `src/rescuegroups/`가 병합된 뒤 사용할 수 있습니다.
+> PR #7이 병합되기 전에는 `.env`를 만들거나 이 명령을 실행하지 마세요.
 
 ```powershell
 .\.venv\Scripts\python.exe .\src\rescuegroups\collect.py --species dogs --all
