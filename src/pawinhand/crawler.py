@@ -1,4 +1,4 @@
-"""紐⑸줉 ?쒖꽌 ?좎? + ?ㅼ젣 ?곸꽭 ?섏씠吏 諛⑸Ц. README??sample 紐낅졊遺???ㅽ뻾?섏꽭??"""
+"""목록 순서 유지 + 실제 상세 페이지 방문. README의 sample 명령부터 실행하세요."""
 import argparse
 import asyncio
 import calendar
@@ -18,9 +18,9 @@ from playwright.async_api import async_playwright
 SITE = 'https://pawinhand.kr/shelter/animal'
 API = 'https://pawinhand.net/bridge/'
 LIST = API + 'animals/condition'
-GAUGES = {'health_state': '嫄닿컯?곹깭', 'activity': '?쒕룞??,
-          'sociability': '?ы쉶??, 'aggression': '移쒗솕??}
-TESTS = {'parvo': '?뚮낫', 'corona': '肄붾줈??, 'heartworm': '?ъ옣?ъ긽異?, 'measles': '?띿뿭'}
+GAUGES = {'health_state': '건강상태', 'activity': '활동성',
+          'sociability': '사회성', 'aggression': '친화도'}
+TESTS = {'parvo': '파보', 'corona': '코로나', 'heartworm': '심장사상충', 'measles': '홍역'}
 
 
 class AccessStopped(RuntimeError):
@@ -44,9 +44,9 @@ def write_json(path, value):
 
 def check_http(status):
     if status in (401, 403, 429):
-        raise AccessStopped(f'HTTP {status}: ?묎렐 ?쒗븳?쇰줈 以묐떒')
+        raise AccessStopped(f'HTTP {status}: 접근 제한으로 중단')
     if status != 200:
-        raise RuntimeError(f'HTTP {status}: ?뺤긽 ?묐떟 ?꾨떂')
+        raise RuntimeError(f'HTTP {status}: 정상 응답 아님')
 
 
 async def check_robots(context):
@@ -60,18 +60,18 @@ async def check_robots(context):
         robot = urllib.robotparser.RobotFileParser()
         robot.parse((await response.text()).splitlines())
         if any(not robot.can_fetch('*', base + path) for path in paths):
-            raise AccessStopped('robots.txt?먯꽌 ?섏쭛 寃쎈줈 ?쒗븳')
+            raise AccessStopped('robots.txt에서 수집 경로 제한')
 
 
 def validate_list(rows, start, end):
     if not isinstance(rows, list):
-        raise ValueError('紐⑸줉 ?묐떟 ?뺤떇 蹂寃?)
+        raise ValueError('목록 응답 형식 변경')
     for row in rows:
         if not isinstance(row, dict) or not row.get('notify_number'):
-            raise ValueError('怨듦퀬踰덊샇 ?꾨씫')
+            raise ValueError('공고번호 누락')
         day = datetime.strptime(row['registration_date'], '%Y%m%d').date()
         if not start <= day <= end:
-            raise ValueError(f'議고쉶 踰붿쐞 諛??깅줉?좎쭨: {day}')
+            raise ValueError(f'조회 범위 밖 등록날짜: {day}')
 
 
 async def search(context, as_of):
@@ -81,11 +81,11 @@ async def search(context, as_of):
         await page.goto(SITE, wait_until='networkidle', timeout=60000)
         # A clean first mount may have unpopulated reference lists.
         await page.reload(wait_until='networkidle', timeout=60000)
-        await page.get_by_text('理쒓렐 3媛쒖썡', exact=False).first.click()
+        await page.get_by_text('최근 3개월', exact=False).first.click()
         checks = page.locator('input[type=checkbox]')
         await checks.nth(0).check()
         await checks.nth(1).uncheck()
-        for i, label in enumerate(['紐⑤뱺 吏??, '紐⑤뱺 ?숇Ъ', '?꾩껜', '?꾩껜', '?꾩껜']):
+        for i, label in enumerate(['모든 지역', '모든 동물', '전체', '전체', '전체']):
             await page.locator('select').nth(i).select_option(label=label)
         start, end = period(as_of)
         expected = [start.isoformat(), end.isoformat()]
@@ -98,23 +98,23 @@ async def search(context, as_of):
                 await dates.nth(i).fill(value)
                 await dates.nth(i).press('Enter')
         async with page.expect_response(lambda r: r.url.startswith(LIST + '?'), timeout=45000) as event:
-            await page.get_by_role('button', name='寃?됲븯湲?, exact=True).click()
+            await page.get_by_role('button', name='검색하기', exact=True).click()
         response = await event.value
         check_http(response.status)
         rows = await response.json()
         query = dict(parse_qsl(urlsplit(response.url).query))
-        expected_query = {'city': '紐⑤뱺 吏??, 'country': '?꾩껜', 'species': '紐⑤뱺 ?숇Ъ',
-                          'breeds': '?꾩껜', 'state': '?꾩껜', 'sex': '?꾩껜', 'neutral': '?꾩껜',
+        expected_query = {'city': '모든 지역', 'country': '전체', 'species': '모든 동물',
+                          'breeds': '전체', 'state': '전체', 'sex': '전체', 'neutral': '전체',
                           'start_date': start.strftime('%Y%m%d'), 'end_date': end.strftime('%Y%m%d')}
         if any(query.get(k) != v for k, v in expected_query.items()):
-            raise ValueError('?붾㈃ 寃?됱“嫄닿낵 ?붿껌 湲곌컙/?꾪꽣 遺덉씪移?)
+            raise ValueError('화면 검색조건과 요청 기간/필터 불일치')
         validate_list(rows, start, end)
         if rows:
             await page.locator('.animal-list-card').first.wait_for(timeout=15000)
             await page.wait_for_function("id => [...document.querySelectorAll('.animal-list-card')].some(e=>e.innerText.includes(id))", arg=rows[0]['notify_number'])
             cards = await page.locator('.animal-list-card').all_inner_texts()
             if len(cards) != len(rows) or any(r['notify_number'] not in card for r, card in zip(rows, cards)):
-                raise ValueError('紐⑸줉 ?묐떟 ?쒖꽌? ?붾㈃ 移대뱶 ?쒖꽌 遺덉씪移?)
+                raise ValueError('목록 응답 순서와 화면 카드 순서 불일치')
         proof = {'verified_at': timestamp(), 'period_start': expected[0], 'period_end': expected[1],
                  'query': query, 'request_url': response.url,
                  'first_page_notice_ids': [r['notify_number'] for r in rows],
@@ -132,7 +132,7 @@ def open_db(folder, settings):
     old = get_meta(db, 'settings')
     if old and old != settings:
         db.close()
-        raise ValueError('湲곌컙/?쒕낯 ?ㅼ젙???ㅻⅨ ?묒뾽?낅땲?? ??異쒕젰 ?대뜑瑜??ъ슜?섏꽭??')
+        raise ValueError('기간/표본 설정이 다른 작업입니다. 새 출력 폴더를 사용하세요.')
     if not old:
         with db:
             set_meta(db, 'settings', settings)
@@ -176,7 +176,7 @@ async def collect_list(context, db, args):
             response = await context.request.get(LIST + '?' + urlencode({**query, 'offset': offset}), timeout=45000)
             check_http(response.status)
             if await response.json():
-                raise RuntimeError('鍮??섏씠吏 ?ы솗??寃곌낵媛 ?щ씪吏? 紐⑸줉 蹂?????ш컻 ?꾩슂')
+                raise RuntimeError('빈 페이지 재확인 결과가 달라짐; 목록 변동 후 재개 필요')
             with db:
                 set_meta(db, 'list_exhausted', True)
                 set_meta(db, 'list_finished', True)
@@ -196,7 +196,7 @@ async def collect_list(context, db, args):
             signature = [r['notify_number'] for r in rows]
             repeats = get_meta(db, 'identical_page_repeats', 0) + 1 if signature == get_meta(db, 'last_page_ids') else 0
             if repeats >= 3:
-                raise RuntimeError('?숈씪 ?묐떟???ㅻⅨ ?꾩튂?먯꽌 ?곗냽 諛섎났?? ?쒕쾭 ?섏씠吏 泥섎━ ?뺤씤 ?꾩슂')
+                raise RuntimeError('동일 응답이 다른 위치에서 연속 반복됨; 서버 페이지 처리 확인 필요')
             set_meta(db, 'last_page_ids', signature)
             set_meta(db, 'identical_page_repeats', repeats)
             for row in rows:
@@ -205,20 +205,20 @@ async def collect_list(context, db, args):
             set_meta(db, 'offset', offset)
             if args.limit and count >= args.limit:
                 set_meta(db, 'list_finished', True)
-        logging.info('紐⑸줉 %d嫄????(?ъ씠???쒖꽌)', count)
+        logging.info('목록 %d건 저장 (사이트 순서)', count)
         if args.limit and count >= args.limit:
             break
 
 
 def normalize(notice_id, base, more, tags, position, as_of, rendered):
     if not isinstance(base, dict) or base.get('notify_number') != notice_id:
-        raise ValueError('湲곕낯 ?곸꽭 怨듦퀬踰덊샇 遺덉씪移?)
+        raise ValueError('기본 상세 공고번호 불일치')
     if more is not None and not isinstance(more, dict):
-        raise ValueError('異붽? ?뺣낫 ?묐떟 ?뺤떇 蹂寃?)
+        raise ValueError('추가 정보 응답 형식 변경')
     if more and (more.get('notify_number') != notice_id or not set(GAUGES).union(TESTS).issubset(more)):
-        raise ValueError('異붽? ?뺣낫 怨듦퀬踰덊샇/?꾨뱶 遺덉씪移?)
+        raise ValueError('추가 정보 공고번호/필드 불일치')
     if not isinstance(tags, list) or any(not isinstance(t, dict) or t.get('notify_number') != notice_id or 'tag_name' not in t for t in tags):
-        raise ValueError('?쒓렇 ?묐떟 ?뺤떇/怨듦퀬踰덊샇 遺덉씪移?)
+        raise ValueError('태그 응답 형식/공고번호 불일치')
     raw = more or {}
     values = [raw.get(k) for k in list(GAUGES) + list(TESTS) + ['personality_comment', 'medical_comment']]
     present = bool(tags) or any(v is not None and v != '' for v in values)
@@ -296,23 +296,23 @@ async def visit_detail(context, notice_id, position, as_of, timeout):
             if issues:
                 raise issues[0]
             if time.monotonic() > deadline:
-                raise TimeoutError(f'?곸꽭 ?묐떟 ?뺤씤 ?ㅽ뙣: {sorted(payloads)}')
+                raise TimeoutError(f'상세 응답 확인 실패: {sorted(payloads)}')
             await asyncio.sleep(0.05)
         if issues:
             raise issues[0]
-        await page.get_by_text('怨듦퀬踰덊샇', exact=True).wait_for(timeout=10000)
+        await page.get_by_text('공고번호', exact=True).wait_for(timeout=10000)
         more = payloads['more']
         if isinstance(more, dict) and more.get('idx'):
-            await page.get_by_text('?깊뼢?뺣낫', exact=True).wait_for(timeout=10000)
-            await page.get_by_text('嫄닿컯?뺣낫', exact=True).wait_for(timeout=10000)
+            await page.get_by_text('성향정보', exact=True).wait_for(timeout=10000)
+            await page.get_by_text('건강정보', exact=True).wait_for(timeout=10000)
         text = await page.locator('body').inner_text()
-        rendered = {'personality': section_text(text, '?깊뼢?뺣낫', {'嫄닿컯?뺣낫', '?낆뼇?덉감', '異붽?吏??}),
-                    'health': section_text(text, '嫄닿컯?뺣낫', {'?낆뼇?덉감', '?낆뼇吏??, '異붽?吏??})}
+        rendered = {'personality': section_text(text, '성향정보', {'건강정보', '입양절차', '추가지원'}),
+                    'health': section_text(text, '건강정보', {'입양절차', '입양지원', '추가지원'})}
         # Ensure delayed rendering has not caused a false "missing" result.
         for key in ('personality_comment', 'medical_comment'):
             comment = (more or {}).get(key)
             if comment and ''.join(comment.split()) not in ''.join(text.split()):
-                raise ValueError(f'?붾㈃??異붽? ?ㅻ챸???꾩쭅 諛섏쁺?섏? ?딆쓬: {key}')
+                raise ValueError(f'화면에 추가 설명이 아직 반영되지 않음: {key}')
         return normalize(notice_id, payloads['base'], more, payloads['tags'], position, as_of, rendered)
     finally:
         page.remove_listener('response', on_response)
@@ -375,18 +375,18 @@ async def collect_details(context, db, args):
             finally:
                 completed += 1; queue.task_done()
             if completed % 10 == 0:
-                logging.info('?곸꽭 %d/%d 泥섎━',completed,len(pending))
+                logging.info('상세 %d/%d 처리',completed,len(pending))
                 export(db,args.output)
             await asyncio.sleep(args.interval)
     await asyncio.gather(*(worker() for _ in range(args.workers)))
-    if errors: raise RuntimeError(f'?곗냽 ?ㅽ뙣 ?먮뒗 ?묎렐 ?쒗븳?쇰줈 以묐떒: {errors[0]}')
+    if errors: raise RuntimeError(f'연속 실패 또는 접근 제한으로 중단: {errors[0]}')
 
 
 async def run(args):
     args.output.mkdir(parents=True,exist_ok=True)
     logging.basicConfig(level=logging.INFO,format='%(asctime)s %(levelname)s %(message)s',
                         handlers=[logging.StreamHandler(),logging.FileHandler(args.output/'crawler.log',encoding='utf-8')])
-    settings = {'as_of':args.as_of.isoformat(),'limit':args.limit,'scope':'紐⑤뱺 吏??룸え???숇Ъ쨌?꾩껜 ?곹깭', 'version':2}
+    settings = {'as_of':args.as_of.isoformat(),'limit':args.limit,'scope':'모든 지역·모든 동물·전체 상태', 'version':2}
     db = open_db(args.output,settings) if args.command != 'inspect' else None
     began = time.monotonic()
     try:
@@ -423,7 +423,7 @@ async def run(args):
                 await check_robots(context)
                 if args.command == 'inspect':
                     value = await visit_detail(context,args.notice,None,args.as_of,args.timeout)
-                    value['scope_note'] = '媛쒕퀎 ?섏씠吏 湲곕뒫寃利? 理쒓렐 3媛쒖썡 紐⑸줉 ?섏쭛 寃곌낵???ы븿??寃껋씠 ?꾨떂'
+                    value['scope_note'] = '개별 페이지 기능검증: 최근 3개월 목록 수집 결과에 포함한 것이 아님'
                     write_json(args.output/'detail-example.json',value)
                 else:
                     await collect_list(context,db,args)
@@ -433,7 +433,7 @@ async def run(args):
     finally:
         if db:
             report = export(db,args.output); db.close()
-            logging.info('寃곌낵 %s / complete=%s / %.1f珥?,report['counts'],report['complete'],time.monotonic()-began)
+            logging.info('결과 %s / complete=%s / %.1f초',report['counts'],report['complete'],time.monotonic()-began)
     if db and (report['counts'].get('failed') or report['counts'].get('pending')):
         raise SystemExit(1)
 
@@ -443,16 +443,16 @@ def main():
     parser.add_argument('command',choices=['collect','status','inspect'])
     parser.add_argument('--as-of',type=date.fromisoformat,default=date(2026,9,30))
     parser.add_argument('--output',type=Path,default=Path('data/pawinhand/raw/2026-09-30'))
-    parser.add_argument('--limit',type=int,default=0,help='0=?꾩껜, ?묒닔=紐⑸줉 ?꾩뿉?쒕????쒕낯 N嫄?)
-    parser.add_argument('--workers',type=int,default=2,help='?곸꽭 ?섏씠吏 ?숈떆 諛⑸Ц ??(1~3)')
-    parser.add_argument('--interval',type=float,default=0.5,help='?묒뾽蹂?諛⑸Ц 媛??湲?(理쒖냼 0.5珥?')
+    parser.add_argument('--limit',type=int,default=0,help='0=전체, 양수=목록 위에서부터 표본 N건')
+    parser.add_argument('--workers',type=int,default=2,help='상세 페이지 동시 방문 수 (1~3)')
+    parser.add_argument('--interval',type=float,default=0.5,help='작업별 방문 간 대기 (최소 0.5초)')
     parser.add_argument('--timeout',type=int,default=25)
     parser.add_argument('--channel',choices=['chrome','msedge'])
-    parser.add_argument('--notice',help='inspect??怨듦퀬踰덊샇')
+    parser.add_argument('--notice',help='inspect용 공고번호')
     args=parser.parse_args()
     if args.limit<0 or not 1<=args.workers<=3 or args.interval<0.5 or args.timeout<5:
         parser.error('limit>=0, workers=1~3, interval>=0.5, timeout>=5')
-    if args.command=='inspect' and not args.notice: parser.error('inspect?먮뒗 --notice ?꾩슂')
+    if args.command=='inspect' and not args.notice: parser.error('inspect에는 --notice 필요')
     asyncio.run(run(args))
 
 
