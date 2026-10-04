@@ -1,0 +1,11 @@
+﻿feature,comment_total_n,comment_hit_n,comment_hit_pct,tags_hit_n,special_mark_hit_n,comment_only_vs_tags_n,comment_only_vs_special_mark_n,comment_only_vs_both_n
+human_sociability,381,276,72.44,267,114,57,199,29
+activity_energy,381,151,39.63,198,18,40,136,36
+training_need,381,56,14.7,20,1,46,56,46
+dog_compatibility,381,48,12.6,122,0,26,48,26
+special_care,381,30,7.87,0,17,30,26,26
+alone_time,381,24,6.3,2,2,24,24,24
+housetraining,381,15,3.94,19,0,9,15,9
+owner_experience,381,6,1.57,0,0,6,6,6
+kids_compatibility,381,4,1.05,2,0,4,4,4
+cat_compatibility,381,3,0.79,19,0,2,3,2
