@@ -1,0 +1,74 @@
+﻿category,metric,group,n,pct,value
+coverage,special_mark,all_3months,22511.0,100.0,22511.0
+coverage,personality_comment,all_3months,381.0,1.69,22511.0
+coverage,personality_tags,all_3months,576.0,2.56,22511.0
+coverage,health_comment,all_3months,604.0,2.68,22511.0
+coverage,detail_present_clean,all_3months,841.0,3.74,22511.0
+coverage,gauge_활동성,all_3months,815.0,3.62,22511.0
+coverage,gauge_사회성,all_3months,815.0,3.62,22511.0
+coverage,gauge_친화도,all_3months,815.0,3.62,22511.0
+coverage,gauge_건강상태,all_3months,812.0,3.61,22511.0
+coverage,special_mark,active_only,7791.0,100.0,7791.0
+coverage,personality_comment,active_only,141.0,1.81,7791.0
+coverage,personality_tags,active_only,271.0,3.48,7791.0
+coverage,health_comment,active_only,217.0,2.79,7791.0
+coverage,detail_present_clean,active_only,327.0,4.2,7791.0
+coverage,gauge_활동성,active_only,318.0,4.08,7791.0
+coverage,gauge_사회성,active_only,319.0,4.09,7791.0
+coverage,gauge_친화도,active_only,319.0,4.09,7791.0
+coverage,gauge_건강상태,active_only,318.0,4.08,7791.0
+comment_coverage,species,개,344.0,2.5,13786.0
+comment_coverage,species,고양이,36.0,0.44,8190.0
+comment_coverage,species,기타,1.0,0.19,535.0
+comment_coverage,status_raw,보호중,141.0,1.81,7791.0
+comment_coverage,status_raw,종료(기증),9.0,1.09,828.0
+comment_coverage,status_raw,종료(반환),12.0,0.47,2575.0
+comment_coverage,status_raw,종료(방사),0.0,0.0,459.0
+comment_coverage,status_raw,종료(안락사),30.0,1.86,1613.0
+comment_coverage,status_raw,종료(입양),184.0,4.34,4240.0
+comment_coverage,status_raw,종료(자연사),5.0,0.1,5005.0
+comment_length,comment_n,comment,,,381.0
+comment_length,char_mean,comment,,,283.1
+comment_length,char_median,comment,,,248.0
+comment_length,char_p25,comment,,,135.0
+comment_length,char_p75,comment,,,383.0
+comment_length,char_p90,comment,,,563.0
+comment_length,char_max,comment,,,1278.0
+comment_length,line_median,comment,,,11.0
+topic_keyword_screening,사람_친화력,comment,105.0,27.56,
+topic_keyword_screening,좋아하는것,comment,87.0,22.83,
+topic_keyword_screening,에너지_활동성,comment,65.0,17.06,
+topic_keyword_screening,타동물_친화력,comment,60.0,15.75,
+topic_keyword_screening,교육_훈련,comment,56.0,14.7,
+topic_keyword_screening,싫어하는것,comment,55.0,14.44,
+topic_keyword_screening,이상적인가정,comment,54.0,14.17,
+topic_keyword_screening,산책_운동,comment,42.0,11.02,
+topic_keyword_screening,성격_성향,comment,31.0,8.14,
+topic_keyword_screening,혼자있는시간,comment,22.0,5.77,
+topic_keyword_screening,고양이경험,comment,20.0,5.25,
+topic_keyword_screening,아이_아동,comment,4.0,1.05,
+cooccurrence,comment + tags,comment,288.0,75.59,
+cooccurrence,comment + any_gauge,comment,363.0,95.28,
+cooccurrence,comment + health_comment,comment,226.0,59.32,
+cooccurrence,comment + tags + any_gauge,comment,288.0,75.59,
+cooccurrence,"comment only (no tags, no gauge)",comment,18.0,4.72,
+source_marker_keyword_screening,mentions_pawinhand,comment,12.0,3.15,
+source_marker_keyword_screening,mentions_shelter_or_center,comment,118.0,30.97,
+source_marker_keyword_screening,mentions_adoption_contact,comment,80.0,21.0,
+source_marker_keyword_screening,mentions_socialization_program,comment,12.0,3.15,
+source_marker_keyword_screening,mentions_ideal_home,comment,54.0,14.17,
+template_duplicate,comment_n,comment,,,381.0
+template_duplicate,unique_normalized_comments,comment,,,334.0
+template_duplicate,rows_in_exact_duplicate_groups,comment,,,58.0
+template_duplicate,exact_duplicate_group_n,comment,,,11.0
+template_duplicate,rows_with_repeated_prefix80,comment,,,62.0
+template_duplicate,repeated_prefix80_group_n,comment,,,13.0
+shelter_concentration,shelter_n,all,245.0,,
+shelter_concentration,comment_shelter_n,all,19.0,,
+shelter_concentration,shelters_ge5_n,all,15.0,,
+shelter_concentration,shelters_ge10_n,all,12.0,,
+shelter_concentration,top1_share,comment,,19.16,
+shelter_concentration,top5_share,comment,,56.96,
+shelter_concentration,top10_share,comment,,83.99,
+structured_comment_keyword_screening,structured_comment_n,서울시립동물복지지원센터 동대문,28.0,,
+structured_comment_keyword_screening,structured_comment_n,서울시립동물복지지원센터 마포,27.0,,
